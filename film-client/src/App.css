@@ -296,3 +296,9 @@ button {
         transform: translateY(0);
     }
 }
+.card-meta {
+    margin: 0 0 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #f09819;
+}

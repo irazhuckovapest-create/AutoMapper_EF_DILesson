@@ -1,5 +1,4 @@
-﻿using EF_DILesson.Dto;
-using EF_DILesson.Models;
+﻿using EF_DILesson.Models;
 using EF_DILesson.Repository;
 
 namespace EF_DILesson.Service
@@ -13,31 +12,34 @@ namespace EF_DILesson.Service
             _filmRepository = filmRepository;
         }
 
-        public List<FilmDto> GetAllFilms()
+        public List<Film> GetAllFilms()
         {
-            var films = _filmRepository.GetAll();
-            var result = new List<FilmDto>();
-
-            foreach (var film in films)
-            {
-                FilmDto dto = new FilmDto();
-                dto.Id = film.Id;
-                dto.Title = film.Title;
-                dto.Description = film.Description;
-                dto.ImageUrl = film.ImageUrl;
-                result.Add(dto);
-            }
-
-            return result;
+            return _filmRepository.GetAll();
         }
 
-        public void AddFilm(FilmCreateDto dto)
+        public Film GetFilmById(int id)
         {
-            Film film = new Film();
-            film.Title = dto.Title;
-            film.Description = dto.Description;
-            film.ImageUrl = dto.ImageUrl;
+            return _filmRepository.GetById(id);
+        }
+
+        public void AddFilm(Film film)
+        {
             _filmRepository.Add(film);
+        }
+
+        public Film UpdateFilm(int id, Film newData)
+        {
+            Film film = _filmRepository.GetById(id);
+            if (film == null) return null;
+
+            film.Title = newData.Title;
+            film.Description = newData.Description;
+            film.ImageUrl = newData.ImageUrl;
+            film.Year = newData.Year;
+            film.Rating = newData.Rating;
+
+            _filmRepository.Update(film);
+            return film;
         }
 
         public bool DeleteFilm(int id)

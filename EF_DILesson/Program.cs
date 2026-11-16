@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -29,6 +30,9 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.MapOpenApi();
+app.UseSwaggerUI(o => o.SwaggerEndpoint("/openapi/v1.json", "MovieApi"));
+
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -39,35 +43,45 @@ using (var scope = app.Services.CreateScope())
         {
             Title = "Бабадук",
             Description = "Мати-одиначка та її син стикаються з моторошною істотою після появи загадкової книжки.",
-            ImageUrl = "/posters/babadook.jpg"
+            ImageUrl = "/posters/babadook.jpg",
+            Year = 2014,
+            Rating = 5.8
         });
 
         context.Films.Add(new Film
         {
             Title = "Аннабель",
             Description = "Подружжя, що чекає на дитину, опиняється в центрі жахів через стару колекційну ляльку.",
-            ImageUrl = "/posters/annabelle.jpg"
+            ImageUrl = "/posters/annabelle.jpg",
+            Year = 2014,
+            Rating = 6.4
         });
 
         context.Films.Add(new Film
         {
             Title = "Пила",
             Description = "Двоє незнайомців прокидаються в пастці та мають зіграти в жорстоку гру, щоб вижити.",
-            ImageUrl = "/posters/saw.jpg"
+            ImageUrl = "/posters/saw.jpg",
+            Year = 2004,
+            Rating = 7.6
         });
 
         context.Films.Add(new Film
         {
             Title = "Обсесія",
             Description = "Хорор про одержимість, яка поступово руйнує життя героїв.",
-            ImageUrl = "/posters/obsession.jpg"
+            ImageUrl = "/posters/obsession.jpg",
+            Year = 2026,
+            Rating = 2.5
         });
 
         context.Films.Add(new Film
         {
             Title = "3 метри над рівнем неба",
             Description = "Бунтівний хлопець і вихована дівчина з багатої родини закохуються, попри різні світи.",
-            ImageUrl = "/posters/three-meters.jpg"
+            ImageUrl = "/posters/three-meters.jpg",
+            Year = 2010,
+            Rating = 9.2
         });
 
         context.SaveChanges();

@@ -16,9 +16,20 @@ namespace EF_DILesson.Repository
             return _context.Films.ToList();
         }
 
+        public Film GetById(int id)
+        {
+            return _context.Films.FirstOrDefault(f => f.Id == id);
+        }
+
         public void Add(Film film)
         {
             _context.Films.Add(film);
+            _context.SaveChanges();
+        }
+
+        public void Update(Film film)
+        {
+            _context.Films.Update(film);
             _context.SaveChanges();
         }
 
