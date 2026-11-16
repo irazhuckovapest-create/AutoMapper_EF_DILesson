@@ -1,13 +1,30 @@
 using EF_DILesson;
+using EF_DILesson.Interfaces;
 using EF_DILesson.Models;
 using EF_DILesson.Repository;
 using EF_DILesson.Service;
+using EF_DILesson.Validators;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0;
+    options.AddSchemaTransformer((schema, context, cancellationToken) =>
+    {
+        if (context.JsonTypeInfo.Type == typeof(int) || context.JsonTypeInfo.Type == typeof(long))
+        {
+            schema.Type = Microsoft.OpenApi.JsonSchemaType.Integer;
+            schema.Format = "int32";
+            schema.AnyOf?.Clear();
+            schema.OneOf?.Clear();
+        }
+        return Task.CompletedTask;
+    });
+});
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -15,8 +32,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<UserService>();
 
-builder.Services.AddScoped<FilmRepository>();
-builder.Services.AddScoped<FilmService>();
+builder.Services.AddScoped<IFilmRepository, FilmRepository>();
+builder.Services.AddScoped<IFilmService, FilmService>();
+
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+builder.Services.AddScoped<ICommentService, CommentService>();
+
+builder.Services.AddValidatorsFromAssemblyContaining<CreateMovieRequestValidator>();
 
 builder.Services.AddCors(options =>
 {
@@ -43,8 +65,9 @@ using (var scope = app.Services.CreateScope())
         {
             Title = "Бабадук",
             Description = "Мати-одиначка та її син стикаються з моторошною істотою після появи загадкової книжки.",
-            ImageUrl = "/posters/babadook.jpg",
-            Year = 2014,
+            PosterUrl = "/posters/babadook.jpg",
+            MovieUrl = "https://example.com/babadook",
+            ReleaseYear = 2014,
             Rating = 5.8
         });
 
@@ -52,8 +75,9 @@ using (var scope = app.Services.CreateScope())
         {
             Title = "Аннабель",
             Description = "Подружжя, що чекає на дитину, опиняється в центрі жахів через стару колекційну ляльку.",
-            ImageUrl = "/posters/annabelle.jpg",
-            Year = 2014,
+            PosterUrl = "/posters/annabelle.jpg",
+            MovieUrl = "https://example.com/annabelle",
+            ReleaseYear = 2014,
             Rating = 6.4
         });
 
@@ -61,8 +85,9 @@ using (var scope = app.Services.CreateScope())
         {
             Title = "Пила",
             Description = "Двоє незнайомців прокидаються в пастці та мають зіграти в жорстоку гру, щоб вижити.",
-            ImageUrl = "/posters/saw.jpg",
-            Year = 2004,
+            PosterUrl = "/posters/saw.jpg",
+            MovieUrl = "https://example.com/saw",
+            ReleaseYear = 2004,
             Rating = 7.6
         });
 
@@ -70,8 +95,9 @@ using (var scope = app.Services.CreateScope())
         {
             Title = "Обсесія",
             Description = "Хорор про одержимість, яка поступово руйнує життя героїв.",
-            ImageUrl = "/posters/obsession.jpg",
-            Year = 2026,
+            PosterUrl = "/posters/obsession.jpg",
+            MovieUrl = "https://example.com/obsession",
+            ReleaseYear = 2026,
             Rating = 2.5
         });
 
@@ -79,13 +105,79 @@ using (var scope = app.Services.CreateScope())
         {
             Title = "3 метри над рівнем неба",
             Description = "Бунтівний хлопець і вихована дівчина з багатої родини закохуються, попри різні світи.",
-            ImageUrl = "/posters/three-meters.jpg",
-            Year = 2010,
+            PosterUrl = "/posters/three-meters.jpg",
+            MovieUrl = "https://example.com/three-meters",
+            ReleaseYear = 2010,
             Rating = 9.2
         });
 
         context.SaveChanges();
     }
+
+    if (!context.Films.Any(f => f.Title == "Інша мама"))
+    {
+        context.Films.Add(new Film
+        {
+            Title = "Інша мама",
+            Description = "Напружений психологічний трилер про таємниці минулого.",
+            PosterUrl = "https://m.media-amazon.com/images/M/MV5BOGUyODYyYTctMmY0Mi00ZWIwLThjYWItZDJmODY4NGU1YjY1XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
+            MovieUrl = "https://example.com/insha-mama",
+            ReleaseYear = 2026,
+            Rating = 7.4
+        });
+
+        context.SaveChanges();
+    }
+
+    var extraFilms = new List<Film>
+    {
+        new Film
+        {
+            Title = "Пасажири",
+            Description = "Космічний корабель перевозить тисячі людей на нову планету, але через збій двоє пасажирів прокидаються на 90 років раніше.",
+            PosterUrl = "https://upload.wikimedia.org/wikipedia/ru/d/d0/%D0%9F%D0%B0%D1%81%D1%81%D0%B0%D0%B6%D0%B8%D1%80%D1%8B_%28%D0%BF%D0%BE%D1%81%D1%82%D0%B5%D1%80_%D1%84%D0%B8%D0%BB%D1%8C%D0%BC%D0%B0%2C_2016%29.jpg?utm_source=ru.wikipedia.org&utm_campaign=index&utm_content=original",
+            MovieUrl = "https://example.com/passengers",
+            ReleaseYear = 2016,
+            Rating = 7.0
+        },
+        new Film
+        {
+            Title = "Інтерстеллар",
+            Description = "Команда дослідників вирушає крізь червоточину в космосі, щоб знайти новий дім для людства.",
+            PosterUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS58xqOmddVJT6oT94e65UHgibI_ZHyFzNgOvTPQ7r53j8akZSdekuIqAc&s=10",
+            MovieUrl = "https://example.com/interstellar",
+            ReleaseYear = 2014,
+            Rating = 8.7
+        },
+        new Film
+        {
+            Title = "Острів проклятих",
+            Description = "Двоє судових приставів вирушають на віддалений острів у Массачусетсі, щоб розслідувати зникнення пацієнтки клініки для душевнохворих.",
+            PosterUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQSn9tmMYi5gtMkEw9qlAE66i-ba8o1mo37WUgSJf-LUw&s=10",
+            MovieUrl = "https://example.com/shutter-island",
+            ReleaseYear = 2010,
+            Rating = 8.2
+        },
+        new Film
+        {
+            Title = "Зникла",
+            Description = "На п'яту річницю весілля дружина безслідно зникає, а всі докази починають вказувати на її чоловіка.",
+            PosterUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRd9lAqMykhtyY2NR09UrBkvD30CJ2Flt51d6Ms5nzrC3XvUpPsD_WcmSHK&s=10",
+            MovieUrl = "https://example.com/gone-girl",
+            ReleaseYear = 2014,
+            Rating = 8.1
+        }
+    };
+
+    foreach (var film in extraFilms)
+    {
+        if (!context.Films.Any(f => f.Title == film.Title))
+        {
+            context.Films.Add(film);
+        }
+    }
+
+    context.SaveChanges();
 }
 
 app.UseHttpsRedirection();

@@ -1,8 +1,9 @@
-﻿using EF_DILesson.Models;
+﻿using EF_DILesson.Interfaces;
+using EF_DILesson.Models;
 
 namespace EF_DILesson.Repository
 {
-    public class FilmRepository
+    public class FilmRepository : IFilmRepository
     {
         private readonly AppDbContext _context;
 

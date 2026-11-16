@@ -1,6 +1,7 @@
 ﻿using EF_DILesson.Contracts;
+using EF_DILesson.Interfaces;
 using EF_DILesson.Models;
-using EF_DILesson.Service;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EF_DILesson.Controllers
@@ -9,11 +10,17 @@ namespace EF_DILesson.Controllers
     [ApiController]
     public class FilmController : ControllerBase
     {
-        private readonly FilmService _filmService;
+        private readonly IFilmService _filmService;
+        private readonly IValidator<CreateMovieRequest> _createValidator;
+        private readonly IValidator<UpdateMovieRequest> _updateValidator;
 
-        public FilmController(FilmService filmService)
+        public FilmController(IFilmService filmService,
+            IValidator<CreateMovieRequest> createValidator,
+            IValidator<UpdateMovieRequest> updateValidator)
         {
             _filmService = filmService;
+            _createValidator = createValidator;
+            _updateValidator = updateValidator;
         }
 
         private MovieResponse ToResponse(Film film)
@@ -22,8 +29,9 @@ namespace EF_DILesson.Controllers
             response.Id = film.Id;
             response.Title = film.Title;
             response.Description = film.Description;
-            response.ImageUrl = film.ImageUrl;
-            response.Year = film.Year;
+            response.PosterUrl = film.PosterUrl;
+            response.MovieUrl = film.MovieUrl;
+            response.ReleaseYear = film.ReleaseYear;
             response.Rating = film.Rating;
             return response;
         }
@@ -53,11 +61,15 @@ namespace EF_DILesson.Controllers
         [HttpPost]
         public ActionResult<MovieResponse> Create(CreateMovieRequest request)
         {
+            var res = _createValidator.Validate(request);
+            if (!res.IsValid) return BadRequest(res.Errors);
+
             Film film = new Film();
             film.Title = request.Title;
             film.Description = request.Description;
-            film.ImageUrl = request.ImageUrl;
-            film.Year = request.Year;
+            film.PosterUrl = request.PosterUrl;
+            film.MovieUrl = request.MovieUrl;
+            film.ReleaseYear = request.ReleaseYear;
             film.Rating = request.Rating;
 
             _filmService.AddFilm(film);
@@ -67,11 +79,15 @@ namespace EF_DILesson.Controllers
         [HttpPut("{id}")]
         public ActionResult<MovieResponse> Update(int id, UpdateMovieRequest request)
         {
+            var res = _updateValidator.Validate(request);
+            if (!res.IsValid) return BadRequest(res.Errors);
+
             Film newData = new Film();
             newData.Title = request.Title;
             newData.Description = request.Description;
-            newData.ImageUrl = request.ImageUrl;
-            newData.Year = request.Year;
+            newData.PosterUrl = request.PosterUrl;
+            newData.MovieUrl = request.MovieUrl;
+            newData.ReleaseYear = request.ReleaseYear;
             newData.Rating = request.Rating;
 
             Film film = _filmService.UpdateFilm(id, newData);

@@ -1,13 +1,13 @@
-﻿using EF_DILesson.Models;
-using EF_DILesson.Repository;
+﻿using EF_DILesson.Interfaces;
+using EF_DILesson.Models;
 
 namespace EF_DILesson.Service
 {
-    public class FilmService
+    public class FilmService : IFilmService
     {
-        private readonly FilmRepository _filmRepository;
+        private readonly IFilmRepository _filmRepository;
 
-        public FilmService(FilmRepository filmRepository)
+        public FilmService(IFilmRepository filmRepository)
         {
             _filmRepository = filmRepository;
         }
@@ -34,8 +34,9 @@ namespace EF_DILesson.Service
 
             film.Title = newData.Title;
             film.Description = newData.Description;
-            film.ImageUrl = newData.ImageUrl;
-            film.Year = newData.Year;
+            film.PosterUrl = newData.PosterUrl;
+            film.MovieUrl = newData.MovieUrl;
+            film.ReleaseYear = newData.ReleaseYear;
             film.Rating = newData.Rating;
 
             _filmRepository.Update(film);
