@@ -1,4 +1,5 @@
-﻿using EF_DILesson.Contracts;
+﻿using AutoMapper;
+using EF_DILesson.Contracts;
 using EF_DILesson.Interfaces;
 using EF_DILesson.Models;
 using FluentValidation;
@@ -13,25 +14,17 @@ namespace EF_DILesson.Controllers
         private readonly ICommentService _commentService;
         private readonly IValidator<CreateCommentRequest> _createValidator;
         private readonly IValidator<UpdateCommentRequest> _updateValidator;
+        private readonly IMapper _mapper;
 
         public CommentController(ICommentService commentService,
             IValidator<CreateCommentRequest> createValidator,
-            IValidator<UpdateCommentRequest> updateValidator)
+            IValidator<UpdateCommentRequest> updateValidator,
+            IMapper mapper)
         {
             _commentService = commentService;
             _createValidator = createValidator;
             _updateValidator = updateValidator;
-        }
-
-        private CommentResponse ToResponse(MovieComment comment)
-        {
-            CommentResponse response = new CommentResponse();
-            response.Id = comment.Id;
-            response.MovieId = comment.MovieId;
-            response.AuthorName = comment.AuthorName;
-            response.Text = comment.Text;
-            response.CreatedAt = comment.CreatedAt;
-            return response;
+            _mapper = mapper;
         }
 
         [HttpGet("film/{filmId}")]
@@ -40,13 +33,7 @@ namespace EF_DILesson.Controllers
             var comments = _commentService.GetCommentsByFilm(filmId);
             if (comments == null) return NotFound("Фільм з id " + filmId + " не знайдено");
 
-            var response = new List<CommentResponse>();
-            foreach (var comment in comments)
-            {
-                response.Add(ToResponse(comment));
-            }
-
-            return Ok(response);
+            return Ok(_mapper.Map<List<CommentResponse>>(comments));
         }
 
         [HttpPost("film/{filmId}")]
@@ -55,14 +42,12 @@ namespace EF_DILesson.Controllers
             var res = _createValidator.Validate(request);
             if (!res.IsValid) return BadRequest(res.Errors);
 
-            MovieComment comment = new MovieComment();
-            comment.AuthorName = request.AuthorName;
-            comment.Text = request.Text;
+            MovieComment comment = _mapper.Map<MovieComment>(request);
 
             MovieComment created = _commentService.AddComment(filmId, comment);
             if (created == null) return NotFound("Фільм з id " + filmId + " не знайдено");
 
-            return Ok(ToResponse(created));
+            return Ok(_mapper.Map<CommentResponse>(created));
         }
 
         [HttpPut("{id}")]
@@ -71,13 +56,12 @@ namespace EF_DILesson.Controllers
             var res = _updateValidator.Validate(request);
             if (!res.IsValid) return BadRequest(res.Errors);
 
-            MovieComment newData = new MovieComment();
-            newData.Text = request.Text;
+            MovieComment newData = _mapper.Map<MovieComment>(request);
 
             MovieComment comment = _commentService.UpdateComment(id, newData);
             if (comment == null) return NotFound("Коментар з id " + id + " не знайдено");
 
-            return Ok(ToResponse(comment));
+            return Ok(_mapper.Map<CommentResponse>(comment));
         }
 
         [HttpDelete("{id}")]

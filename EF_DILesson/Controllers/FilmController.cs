@@ -1,4 +1,5 @@
-﻿using EF_DILesson.Contracts;
+﻿using AutoMapper;
+using EF_DILesson.Contracts;
 using EF_DILesson.Interfaces;
 using EF_DILesson.Models;
 using FluentValidation;
@@ -13,41 +14,24 @@ namespace EF_DILesson.Controllers
         private readonly IFilmService _filmService;
         private readonly IValidator<CreateMovieRequest> _createValidator;
         private readonly IValidator<UpdateMovieRequest> _updateValidator;
+        private readonly IMapper _mapper;
 
         public FilmController(IFilmService filmService,
             IValidator<CreateMovieRequest> createValidator,
-            IValidator<UpdateMovieRequest> updateValidator)
+            IValidator<UpdateMovieRequest> updateValidator,
+            IMapper mapper)
         {
             _filmService = filmService;
             _createValidator = createValidator;
             _updateValidator = updateValidator;
-        }
-
-        private MovieResponse ToResponse(Film film)
-        {
-            MovieResponse response = new MovieResponse();
-            response.Id = film.Id;
-            response.Title = film.Title;
-            response.Description = film.Description;
-            response.PosterUrl = film.PosterUrl;
-            response.MovieUrl = film.MovieUrl;
-            response.ReleaseYear = film.ReleaseYear;
-            response.Rating = film.Rating;
-            return response;
+            _mapper = mapper;
         }
 
         [HttpGet]
         public ActionResult<List<MovieResponse>> GetAll()
         {
             var films = _filmService.GetAllFilms();
-            var response = new List<MovieResponse>();
-
-            foreach (var film in films)
-            {
-                response.Add(ToResponse(film));
-            }
-
-            return Ok(response);
+            return Ok(_mapper.Map<List<MovieResponse>>(films));
         }
 
         [HttpGet("{id}")]
@@ -55,7 +39,7 @@ namespace EF_DILesson.Controllers
         {
             Film film = _filmService.GetFilmById(id);
             if (film == null) return NotFound("Фільм з id " + id + " не знайдено");
-            return Ok(ToResponse(film));
+            return Ok(_mapper.Map<MovieResponse>(film));
         }
 
         [HttpPost]
@@ -64,16 +48,10 @@ namespace EF_DILesson.Controllers
             var res = _createValidator.Validate(request);
             if (!res.IsValid) return BadRequest(res.Errors);
 
-            Film film = new Film();
-            film.Title = request.Title;
-            film.Description = request.Description;
-            film.PosterUrl = request.PosterUrl;
-            film.MovieUrl = request.MovieUrl;
-            film.ReleaseYear = request.ReleaseYear;
-            film.Rating = request.Rating;
+            Film film = _mapper.Map<Film>(request);
 
             _filmService.AddFilm(film);
-            return CreatedAtAction(nameof(GetById), new { id = film.Id }, ToResponse(film));
+            return CreatedAtAction(nameof(GetById), new { id = film.Id }, _mapper.Map<MovieResponse>(film));
         }
 
         [HttpPut("{id}")]
@@ -82,17 +60,11 @@ namespace EF_DILesson.Controllers
             var res = _updateValidator.Validate(request);
             if (!res.IsValid) return BadRequest(res.Errors);
 
-            Film newData = new Film();
-            newData.Title = request.Title;
-            newData.Description = request.Description;
-            newData.PosterUrl = request.PosterUrl;
-            newData.MovieUrl = request.MovieUrl;
-            newData.ReleaseYear = request.ReleaseYear;
-            newData.Rating = request.Rating;
+            Film newData = _mapper.Map<Film>(request);
 
             Film film = _filmService.UpdateFilm(id, newData);
             if (film == null) return NotFound("Фільм з id " + id + " не знайдено");
-            return Ok(ToResponse(film));
+            return Ok(_mapper.Map<MovieResponse>(film));
         }
 
         [HttpDelete("{id}")]

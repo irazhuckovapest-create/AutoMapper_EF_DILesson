@@ -1,4 +1,5 @@
-﻿using EF_DILesson.Dto;
+﻿using AutoMapper;
+using EF_DILesson.Dto;
 using EF_DILesson.Models;
 using EF_DILesson.Repository;
 
@@ -7,10 +8,12 @@ namespace EF_DILesson.Service
     public class UserService
     {
         private readonly UserRepository _userRepository;
+        private readonly IMapper _mapper;
 
-        public UserService(UserRepository userRepository)
+        public UserService(UserRepository userRepository, IMapper mapper)
         {
             _userRepository = userRepository;
+            _mapper = mapper;
         }
 
         public Result RegisterUser(UserRegisterDto dto)
@@ -19,12 +22,7 @@ namespace EF_DILesson.Service
 
             try
             {
-                User user = new User();
-                user.Login = dto.Login;
-                user.Password = dto.Password;
-                user.Name = dto.Name;
-                user.Surname = dto.Surname;
-                user.Age = dto.Age;
+                User user = _mapper.Map<User>(dto);
 
                 _userRepository.RegisterUser(user);
                 result.IsSuccess = true;
@@ -44,9 +42,7 @@ namespace EF_DILesson.Service
 
             try
             {
-                User user = new User();
-                user.Login = dto.Login;
-                user.Password = dto.Password;
+                User user = _mapper.Map<User>(dto);
 
                 _userRepository.LoginUser(user);
                 result.IsSuccess = true;

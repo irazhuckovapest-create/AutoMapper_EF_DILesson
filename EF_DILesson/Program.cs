@@ -1,4 +1,5 @@
 using EF_DILesson;
+using EF_DILesson.MapperProfile;
 using EF_DILesson.Interfaces;
 using EF_DILesson.Models;
 using EF_DILesson.Repository;
@@ -39,7 +40,11 @@ builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<CreateMovieRequestValidator>();
-
+builder.Services.AddAutoMapper(opt =>
+{
+    opt.AddProfile<RequestResponseProfile>();
+    opt.AddProfile<DtoMapperProfile>();
+});
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReact", policy =>
@@ -58,14 +63,14 @@ app.UseSwaggerUI(o => o.SwaggerEndpoint("/openapi/v1.json", "MovieApi"));
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
+    context.Database.Migrate();
     if (!context.Films.Any())
     {
         context.Films.Add(new Film
         {
             Title = "Бабадук",
             Description = "Мати-одиначка та її син стикаються з моторошною істотою після появи загадкової книжки.",
-            PosterUrl = "/posters/babadook.jpg",
+            PosterUrl = "https://media.themoviedb.org/t/p/w220_and_h330_face/fF8wVHBiOhCS5LE48GlNnct63f2.jpg",
             MovieUrl = "https://example.com/babadook",
             ReleaseYear = 2014,
             Rating = 5.8
@@ -75,7 +80,7 @@ using (var scope = app.Services.CreateScope())
         {
             Title = "Аннабель",
             Description = "Подружжя, що чекає на дитину, опиняється в центрі жахів через стару колекційну ляльку.",
-            PosterUrl = "/posters/annabelle.jpg",
+            PosterUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ6kmQWO9oPyY9ZZGl18ePaaFMeSWtJxH8ZHwymcac6_Q&s=10",
             MovieUrl = "https://example.com/annabelle",
             ReleaseYear = 2014,
             Rating = 6.4
@@ -85,7 +90,7 @@ using (var scope = app.Services.CreateScope())
         {
             Title = "Пила",
             Description = "Двоє незнайомців прокидаються в пастці та мають зіграти в жорстоку гру, щоб вижити.",
-            PosterUrl = "/posters/saw.jpg",
+            PosterUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSdmOl0Mldcy8rqQFnh8QDcq2EC9hYNmHUHKuWXAFNB0A&s=10",
             MovieUrl = "https://example.com/saw",
             ReleaseYear = 2004,
             Rating = 7.6
@@ -95,7 +100,7 @@ using (var scope = app.Services.CreateScope())
         {
             Title = "Обсесія",
             Description = "Хорор про одержимість, яка поступово руйнує життя героїв.",
-            PosterUrl = "/posters/obsession.jpg",
+            PosterUrl = "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/10900341/3e447310-fffb-4a7d-b6cf-1a003b924601/576x",
             MovieUrl = "https://example.com/obsession",
             ReleaseYear = 2026,
             Rating = 2.5
@@ -103,7 +108,7 @@ using (var scope = app.Services.CreateScope())
 
         context.Films.Add(new Film
         {
-            Title = "3 метри над рівнем неба",
+            Title = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTGah_FGoOeru2_Sq1evwn3r_QZyTzo9JLCo7kvnAhNMnrgFLihi6z0gHhQ&s=10",
             Description = "Бунтівний хлопець і вихована дівчина з багатої родини закохуються, попри різні світи.",
             PosterUrl = "/posters/three-meters.jpg",
             MovieUrl = "https://example.com/three-meters",
